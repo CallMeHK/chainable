@@ -34,15 +34,15 @@ class AsyncAF {
     });
   }
 
-  chainP(fn) {
+  task(fn) {
     return this.then(result => {
-      return result.chainP(fn);
+      return result.task(fn);
     });
   }
 
-  checkP(fn) {
+  taskCheck(fn) {
     return this.then(result => {
-      return result.checkP(fn);
+      return result.taskCheck(fn);
     });
   }
 

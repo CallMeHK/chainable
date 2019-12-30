@@ -73,7 +73,7 @@ describe("asyncaf test", () => {
 
   it("runs promise on Chainable chain", async () => {
     const result1 = await logO(1)
-      .chainP(promiseOk)
+      .task(promiseOk)
       .chain(logO)
       .willMatch({
         ok: x => `ok ${x.value}`,
@@ -84,10 +84,10 @@ describe("asyncaf test", () => {
 
   it("runs multiple promises", async () => {
     const result1 = await task(promiseOk(1))
-      .chainP(promiseOk)
-      .chainP(promiseOk)
+      .task(promiseOk)
+      .task(promiseOk)
       .chain(logO)
-      .chainP(promiseOk)
+      .task(promiseOk)
       .willMatch({
         ok: x => `ok ${x.value}`,
         error: x => `error ${x.value}`
@@ -97,10 +97,10 @@ describe("asyncaf test", () => {
 
   it("runs multiple promises into errors", async () => {
     const result1 = await task(promiseOk(1))
-      .chainP(promiseError)
-      .chainP(promiseOk)
+      .task(promiseError)
+      .task(promiseOk)
       .chain(logO)
-      .chainP(promiseOk)
+      .task(promiseOk)
       .willMatch({
         ok: x => `ok ${x.value}`,
         error: x => `error ${x.value}`
@@ -110,10 +110,10 @@ describe("asyncaf test", () => {
 
   it("stops if returns a nothing", async () => {
     const result1 = await task(promiseOk(1))
-      .chainP(promisedNothing)
-      .chainP(promiseOk)
+      .task(promisedNothing)
+      .task(promiseOk)
       .chain(logO)
-      .chainP(promiseOk)
+      .task(promiseOk)
       .willMatch({
         ok: x => `ok ${x.value}`,
         error: x => `error ${x.value}`,

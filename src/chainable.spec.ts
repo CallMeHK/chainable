@@ -125,7 +125,7 @@ describe('chainable', () => {
   })
 
 
-  describe('#check and #checkP', () => {
+  describe('#check and #taskCheck', () => {
     const checkTrue = () => true
     const checkError = x => C.error(x + 1)
     const checkTrueP = () => Promise.resolve(true)
@@ -185,9 +185,9 @@ describe('chainable', () => {
     it('works for async', async () => {
       const result = await logO(1)
         .check(checkTrue)
-        .chainP(promiseOk)
+        .task(promiseOk)
         .check(checkTrue)
-        .chainP(promiseOk)
+        .task(promiseOk)
         .willMatch({
           ok: x => `ok ${x.value}`,
           error: x => `error ${x.value}`,
@@ -199,10 +199,10 @@ describe('chainable', () => {
     it('errors properly for async', async () => {
       const result = await logO(1)
         .check(checkTrue)
-        .chainP(promiseOk)
+        .task(promiseOk)
         .check(checkError)
-        .chainP(promiseOk)
-        .chainP(promiseOk)
+        .task(promiseOk)
+        .task(promiseOk)
         .willMatch({
           ok: x => `ok ${x.value}`,
           error: x => `error ${x.value}`,
@@ -211,12 +211,12 @@ describe('chainable', () => {
       expect(result).toBe('error 4')
     })
 
-    it('runs with checkP', async () => {
+    it('runs with taskCheck', async () => {
       const result = await logO(1)
-        .chainP(promiseOk)
-        .checkP(checkTrueP)
-        .chainP(promiseOk)
-        .chainP(promiseOk)
+        .task(promiseOk)
+        .taskCheck(checkTrueP)
+        .task(promiseOk)
+        .task(promiseOk)
         .willMatch({
           ok: x => `ok ${x.value}`,
           error: x => `error ${x.value}`,
@@ -225,12 +225,12 @@ describe('chainable', () => {
       expect(result).toBe('ok 5')
     })
 
-    it('stops on error with checkP', async () => {
+    it('stops on error with taskCheck', async () => {
       const result = await logO(1)
-        .chainP(promiseOk)
-        .checkP(checkErrorP)
-        .chainP(promiseOk)
-        .chainP(promiseOk)
+        .task(promiseOk)
+        .taskCheck(checkErrorP)
+        .task(promiseOk)
+        .task(promiseOk)
         .willMatch({
           ok: x => `ok ${x.value}`,
           error: x => `error ${x.value}`,
@@ -239,21 +239,109 @@ describe('chainable', () => {
       expect(result).toBe('error 4')
     })
 
-    it('checkP works in multiples', async () => {
+    it('taskCheck works in multiples', async () => {
       const result = await logO(1)
-        .chainP(promiseOk)
-        .checkP(checkTrueP)
-        .checkP(checkTrueP)
-        .checkP(checkTrueP)
-        .chainP(promiseOk)
-        .checkP(checkTrueP)
-        .chainP(promiseOk)
+        .task(promiseOk)
+        .taskCheck(checkTrueP)
+        .taskCheck(checkTrueP)
+        .taskCheck(checkTrueP)
+        .task(promiseOk)
+        .taskCheck(checkTrueP)
+        .task(promiseOk)
         .willMatch({
           ok: x => `ok ${x.value}`,
           error: x => `error ${x.value}`,
         })
 
       expect(result).toBe('ok 5')
+    })
+  })
+
+  describe('#either, #ifLeft, #ifRight', () => {
+    describe('#either', () => {
+      it('works for left', () => {
+        const result = logL(1)
+          .either(logO, logE)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 3`)
+      })
+
+      it('works for right', () => {
+        const result = logR(1)
+          .either(logE, logO)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 3`)
+      })
+
+      it('works for ok', () => {
+        const result = logO(1)
+          .either(logL, logR)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 2`)
+      })
+
+      it('works for error', () => {
+        const result = logE(1)
+          .either(logL, logR)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`error 2`)
+      })
+    })
+
+    describe('#isLeft', () => {
+      it('works for left', () => {
+        const result = logL(1)
+          .isLeft(logO)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 3`)
+      })
+
+      it('skips for ok', () => {
+        const result = logO(1)
+          .isLeft(logO)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 2`)
+      })
+    })
+
+    describe('#isRight', () => {
+      it('works for right', () => {
+        const result = logR(1)
+          .isRight(logO)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 3`)
+      })
+
+      it('skips for ok', () => {
+        const result = logO(1)
+          .isRight(logO)
+          .match({
+            ok: x => `ok ${x.value}`,
+            error: x => `error ${x.value}`,
+          })
+        expect(result).toBe(`ok 2`)
+      })
     })
   })
 

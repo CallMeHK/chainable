@@ -1,4 +1,4 @@
-import {task}from './async-chainable'
+import { task } from './async-chainable'
 
 class Chainable {
   public value: any
@@ -33,6 +33,14 @@ class Chainable {
     return Chainable.of(undefined, "nothing");
   }
 
+  buildChainable(fn) {
+    const runFn = fn(this.value);
+    this.value = runFn.value;
+    this.path = runFn.path;
+    return this;
+  }
+
+
   chain(fn) {
     if (this.path === "error" || this.path === "nothing") {
       return this;
@@ -44,7 +52,7 @@ class Chainable {
     return this;
   }
 
-  chainP(fn) {
+  task(fn) {
     if (this.path === "error" || this.path === "nothing") {
       return task(Promise.resolve(Chainable.of(this.value, this.path)));
     }
@@ -67,7 +75,7 @@ class Chainable {
     return this;
   }
 
-  checkP(fn) {
+  taskCheck(fn) {
     if (this.path === "error" || this.path === "nothing") {
       return task(Promise.resolve(Chainable.of(this.value, this.path)));
     }
@@ -86,6 +94,29 @@ class Chainable {
   }
 
   either(LFn, RFn) {
+    if (this.path === 'left') {
+      return this.buildChainable(LFn)
+    } else if (this.path === 'right') {
+      return this.buildChainable(RFn)
+    }
+    return this
+  }
+
+  isLeft(fn) {
+    if (this.path === 'left') {
+      return this.buildChainable(fn)
+    }
+    return this
+  }
+
+  isRight(fn) {
+    if (this.path === 'right') {
+      return this.buildChainable(fn)
+    }
+    return this
+  }
+
+  matchEither(LFn, RFn) {
     return this.match({
       left: x => LFn(x.value),
       right: x => RFn(x.value),
@@ -124,5 +155,11 @@ class Chainable {
     return this.path === "nothing" ? true : null;
   }
 }
+
+// function hi<T>(x:  T): T {
+//   return x
+// }
+// const yo = (x: string) => x
+// hi(yo)
 
 export { Chainable };
